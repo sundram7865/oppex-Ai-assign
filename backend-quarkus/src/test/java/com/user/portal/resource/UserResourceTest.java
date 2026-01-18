@@ -30,7 +30,7 @@ public class UserResourceTest {
         Mockito.when(query.firstResult()).thenReturn(existingUser);
         Mockito.when(User.find(anyString(), (Object[]) any())).thenReturn(query);
 
-        // Requirement 1 & 6: Verify 409 Conflict logic
+        
         given()
           .contentType(ContentType.JSON)
           .body("{\"email\":\"duplicate@test.com\", \"password\":\"pass123\"}")
@@ -53,7 +53,7 @@ public class UserResourceTest {
         Mockito.when(query.firstResult()).thenReturn(user);
         Mockito.when(User.find(anyString(), (Object[]) any())).thenReturn(query);
 
-        // Requirement 3: Verify Unauthorized access
+       
         given()
           .contentType(ContentType.JSON)
           .body("{\"email\":\"sundaram@test.com\", \"password\":\"wrongPassword\"}")

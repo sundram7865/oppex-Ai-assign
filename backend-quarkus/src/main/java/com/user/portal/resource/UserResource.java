@@ -38,7 +38,7 @@ public class UserResource {
         System.out.println(credentials);
         User user = User.find("email", credentials.email).firstResult();
         if (user != null && BCrypt.checkpw(credentials.password, user.password)) {
-            // Requirement 3: Include isValidated claim in JWT
+           
             String token = Jwt.issuer("https://auth-portal.com")
                 .upn(user.email)
                 .claim("email", user.email) 
@@ -52,7 +52,7 @@ public class UserResource {
 
 @PATCH
 @Path("/validate-by-email/{email}")
-@Consumes("*/*") // Allow requests without a specific JSON body
+@Consumes("*/*") 
 @Transactional
 public Response validateByEmail(@PathParam("email") String email) {
     System.out.println(">>> BACKEND: Validating by Email: " + email);
@@ -65,7 +65,7 @@ public Response validateByEmail(@PathParam("email") String email) {
                        .build();
     }
 
-    user.isValidated = true; // Requirement 2: Validation logic
+    user.isValidated = true; 
     return Response.ok(Map.of("message", "Validated")).build();
 }
 }
