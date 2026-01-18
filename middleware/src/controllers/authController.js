@@ -1,32 +1,57 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
 
-const QUARKUS_URL = 'http://localhost:8080/api/users';
+
+dotenv.config();
+
+
+const QUARKUS_URL = process.env.QUARKUS_BASE_URL || 'http://localhost:8080/api/users';
 
 export const signupProxy = async (req, res) => {
     try {
+        
         const response = await axios.post(`${QUARKUS_URL}/signup`, req.body);
-        res.status(201).json(response.data); // Requirement 1: Signup
+        res.status(201).json(response.data); 
     } catch (err) {
-        res.status(err.response?.status || 400).json(err.response?.data || { error: "Signup Failed" });
+        console.error("Signup Proxy Error:", err.message);
+        res.status(err.response?.status || 400).json(
+            err.response?.data || { error: "Signup service unavailable" }
+        );
     }
 };
 
 export const loginProxy = async (req, res) => {
     try {
+        
         const response = await axios.post(`${QUARKUS_URL}/login`, req.body);
-        // Requirement 3 & 6: Session Management/JWT
         res.json(response.data); 
     } catch (err) {
+        console.error("Login Proxy Error:", err.message);
         res.status(401).json({ error: "Unauthorized: Invalid credentials" });
     }
 };
 
 export const validateProxy = async (req, res) => {
+    const { email } = req.params; 
+    
+    if (!email) {
+        return res.status(400).json({ error: "Email parameter is required" });
+    }
+
+    
+    const targetUrl = `${QUARKUS_URL}/validate-by-email/${email}`;
+    console.log(`[Middleware] Proxying validation for: ${email}`);
+
     try {
-        const { id } = req.params;
-        const response = await axios.patch(`${QUARKUS_URL}/validate/${id}`);
-        res.json(response.data); // Requirement 2: Email Validation
+        
+        const response = await axios.patch(targetUrl);
+        res.json(response.data);
     } catch (err) {
-        res.status(404).json({ error: "User not found" });
+        const statusCode = err.response?.status || 500;
+        console.error(`[Quarkus Error] Status: ${statusCode} - ${err.message}`);
+        
+        res.status(statusCode).json({ 
+            error: statusCode === 404 ? "User not found" : "Backend validation failed" 
+        });
     }
 };

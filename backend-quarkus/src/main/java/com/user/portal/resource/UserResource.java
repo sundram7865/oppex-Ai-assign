@@ -17,7 +17,7 @@ public class UserResource {
     @Path("/signup")
     @Transactional
     public Response signup(User user) {
-        // Step 1: Check if user exists (Requirement: Design and cleanliness)
+        
         User existingUser = User.find("email", user.email).firstResult();
         if (existingUser != null) {
             return Response.status(Response.Status.CONFLICT)
@@ -25,7 +25,7 @@ public class UserResource {
                     .build();
         }
 
-        // Step 2: Salted Hashing (Requirement 1)
+        
         user.password = BCrypt.hashpw(user.password, BCrypt.gensalt());
         user.persist();
         
@@ -35,10 +35,13 @@ public class UserResource {
     @POST
     @Path("/login")
     public Response login(User credentials) {
+        System.out.println(credentials);
         User user = User.find("email", credentials.email).firstResult();
         if (user != null && BCrypt.checkpw(credentials.password, user.password)) {
+            // Requirement 3: Include isValidated claim in JWT
             String token = Jwt.issuer("https://auth-portal.com")
                 .upn(user.email)
+                .claim("email", user.email) 
                 .claim("isValidated", user.isValidated)
                 .claim("userId", user.id)
                 .signWithSecret("PrasunAssignmentSecretKeyForSundaram2026!");
@@ -47,13 +50,22 @@ public class UserResource {
         return Response.status(401).build();
     }
 
-    @PATCH
-    @Path("/validate/{id}")
-    @Transactional
-    public Response validate(@PathParam("id") Long id) {
-        User user = User.findById(id);
-        if (user == null) return Response.status(404).build();
-        user.isValidated = true; // Email validation logic
-        return Response.ok(Map.of("message", "Validated")).build();
+@PATCH
+@Path("/validate-by-email/{email}")
+@Consumes("*/*") // Allow requests without a specific JSON body
+@Transactional
+public Response validateByEmail(@PathParam("email") String email) {
+    System.out.println(">>> BACKEND: Validating by Email: " + email);
+
+    User user = User.find("email", email).firstResult();
+    
+    if (user == null) {
+        return Response.status(404)
+                       .entity(Map.of("error", "User " + email + " not found"))
+                       .build();
     }
+
+    user.isValidated = true; // Requirement 2: Validation logic
+    return Response.ok(Map.of("message", "Validated")).build();
+}
 }

@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.post('/signup', signupProxy);
 router.post('/login', loginProxy);
-router.patch('/validate/:id', validateProxy);
+router.patch('/validate/:email', validateProxy);
 
 export default router;
